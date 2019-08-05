@@ -1,14 +1,13 @@
 language: java
 os: linux
-distro: bionic
+dist: bionic
 
 services:
  - docker
   
 before_install:
  - export BINDIR=$TRAVIS_BUILD_DIR/binaries
- - rm -r $BINDIR
- - mkdir $BINDIR
+ - mkdir -p $BINDIR
  - docker build . -f Dockerfile -t ffmpeg-image 
  - docker run -v $BINDIR:/output --name ffmpeg --rm -it ffmpeg-image
  - mkdir -p natives-free/binaries/linux64 && mv $BINDIR/release/linux64/free/*.* $_
