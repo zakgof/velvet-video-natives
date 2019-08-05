@@ -1,0 +1,91 @@
+plugins {
+    id "com.jfrog.bintray" version "1.8.4" apply false
+}
+
+subprojects {
+
+    repositories {
+        jcenter()
+    }
+
+    apply plugin: "java-library"
+    apply plugin: "maven"
+    apply plugin: "maven-publish"
+    apply plugin: "com.jfrog.bintray"
+
+    group = 'com.github.zakgof'
+    def archivesBaseName = 'velvet-video-natives'
+    version = '0.0.1.1'
+    def github = 'https://github.com/zakgof/' + archivesBaseName
+    
+    ext {
+        descr = 'Java video encoding/decoding/muxing/demuxing library native components'   
+        pomConfig = {
+            scm {
+                connection 'scm:git:' + github + '.git'
+                developerConnection 'scm:git:' + github + '.git'
+                url github
+            }
+            licenses {
+                license {
+                    name project.licname
+                    url 'https://opensource.org/licenses/LGPL-3.0'
+                }
+            }
+            developers {
+                developer {
+                  id 'zakgof'
+                  name 'Oleksandr Zakusylo'
+                  email 'zakgof@gmail.com'
+                }
+            }
+        }
+        pkglics = {project.pkglics}
+        classifier = {project.classifier}
+    }
+    publishing {
+        publications {
+            MyPublication(MavenPublication) {
+                groupId group
+                artifactId archivesBaseName
+                artifact source: jar, classifier: classifier
+                version version
+                pom.withXml {
+                    def root = asNode()
+                    root.appendNode('description', project.descr)
+                    root.appendNode('name', project.archivesBaseName)
+                    root.appendNode('url', github + '.git')
+                    root.children().last() + pomConfig
+                }
+            }
+        }
+    }
+
+    bintray {
+        user = 'zakgof'
+        key = project.hasProperty('bintrayKey') ? bintrayKey : System.getenv('BINTRAY_KEY')
+        publications = ['MyPublication']
+        configurations = ['archives']
+        override = true
+        pkg {
+            repo = 'maven'
+            name = archivesBaseName
+            userOrg = 'zakgof'
+            licenses = pkglics()
+            vcsUrl = github + '.git'
+            version {
+                name = project.version
+            }
+        }
+    }
+    
+    jar {
+        baseName = archivesBaseName
+        from('.') {
+          include 'LICENSE.*'
+          include 'binaries/**'
+       }
+    }
+}
+
+

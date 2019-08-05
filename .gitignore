@@ -1,0 +1,11 @@
+.gradle
+build
+binaries
+.settings
+.project
+.classpath
+!gradle-wrapper.jar
+
+/open.bat
+/do-docker-build.bat
+

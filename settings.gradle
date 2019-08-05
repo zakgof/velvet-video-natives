@@ -1,0 +1,3 @@
+rootProject.name = 'velvet-video-natives'
+include 'natives-free'
+include 'natives-full'
