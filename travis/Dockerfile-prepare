@@ -1,0 +1,31 @@
+FROM ubuntu:18.04
+
+RUN apt-get -y update && apt-get install -y apt-utils
+RUN apt-get install -y --fix-missing mc mingw-w64 yasm nasm gcc make cmake git pkg-config wget
+    
+###########
+
+ENV BASE /FFmpeg
+RUN mkdir $BASE
+WORKDIR $BASE    
+
+ENV https_proxy $http_proxy
+
+RUN git clone https://github.com/FFmpeg/FFmpeg.git && cd FFmpeg && git checkout tags/n4.1.4
+RUN git clone https://chromium.googlesource.com/webm/libvpx && cd libvpx && git checkout tags/v1.8.1
+RUN git clone https://github.com/mirror/x264.git && cp -r $BASE/x264 $BASE/x264linux
+RUN git clone https://github.com/videolan/x265.git && cd x265 && git checkout tags/3.1.1 && cp -r $BASE/x265 $BASE/x265linux
+RUN git clone https://aomedia.googlesource.com/aom && cd aom && git checkout tags/v1.0.0 && cp -r $BASE/aom $BASE/aomlinux
+RUN wget -nv http://downloads.xiph.org/releases/ogg/libogg-1.3.0.tar.gz && tar xzvf libogg-1.3.0.tar.gz
+RUN wget -nv http://downloads.xiph.org/releases/vorbis/libvorbis-1.3.3.tar.gz && tar xzvf libvorbis-1.3.3.tar.gz
+
+ENV REL $BASE/release
+ENV FREE_CONFIG --disable-all --enable-libvorbis --enable-libvpx --enable-libaom --enable-decoder=vp8,vp9,libaom_av1 --enable-encoder=libvpx_vp8,libvpx_vp9,libaom_av1 --enable-muxer=ogg,webm,matroska --enable-demuxer=ogg,webm,matroska
+ENV FULL_CONFIG --enable-gpl --enable-libx264 --enable-libx265 --enable-libvpx --enable-libvorbis --enable-libaom
+ENV COMMON_CONFIG="--disable-static --enable-shared --disable-doc --enable-pic \
+   --disable-programs \
+   --disable-postproc --disable-avdevice --disable-swresample --disable-avfilter \
+   --enable-version3 --enable-avcodec --enable-avformat --enable-swscale \
+   --pkg-config-flags=--static \
+   --pkg-config=pkg-config"
+

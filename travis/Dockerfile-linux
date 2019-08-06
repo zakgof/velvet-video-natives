@@ -1,0 +1,23 @@
+FROM ffmpeg-prepare
+
+ENV DEST $BASE/ffmpeg-build-linux
+ENV PREFIX --prefix=$DEST
+ENV PKG_CONFIG_PATH $DEST/lib/pkgconfig
+ENV LINUX_CONFIG --extra-cflags=-I$DEST/include --extra-ldflags=-L$DEST/lib $PREFIX
+
+RUN cd libogg-1.3.0    && ./configure $PREFIX --disable-shared --enable-static && make clean && make && make install
+RUN cd libvorbis-1.3.3 && ./configure $PREFIX --disable-shared --enable-static && make clean && make && make install
+RUN mkdir -p vpx-build-linux && cd vpx-build-linux && ../libvpx/configure $PREFIX \
+ --enable-static --disable-shared --disable-debug --enable-experimental \
+ --disable-examples --disable-tools --disable-docs --disable-unit-tests \
+ --enable-pic --enable-small \
+ && make && make install
+
+RUN cd x264linux && ./configure $PREFIX --disable-cli --enable-static --enable-pic --enable-strip --disable-lavf --disable-swscale && make && make install
+RUN cd x265linux/build/linux && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off ../../source && make && make install
+RUN cd aomlinux/build && cmake -G "Unix Makefiles" -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST .. && make && make install
+
+RUN mkdir -p $REL/linux64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $LINUX_CONFIG  && make && make install && cp $DEST/lib/*.so $REL/linux64/free
+RUN mkdir -p $REL/linux64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $LINUX_CONFIG --extra-libs=-lpthread && make && make install && cp $DEST/lib/*.so $REL/linux64/full
+
+ENTRYPOINT cp -r $REL /output

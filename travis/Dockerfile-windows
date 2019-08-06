@@ -1,0 +1,37 @@
+FROM ffmpeg-prepare
+
+ENV DEST $BASE/ffmpeg-build-windows
+ENV PREFIX --prefix=$DEST
+ENV HOST --host=x86_64-w64-mingw32
+ENV CROSSPREFIX --cross-prefix=x86_64-w64-mingw32- 
+ENV PKG_CONFIG_PATH $DEST/lib/pkgconfig
+
+RUN cd libogg-1.3.0    && ./configure $PREFIX $HOST --disable-shared --enable-static && make && make install
+RUN cd libvorbis-1.3.3 && ./configure $PREFIX $HOST --disable-shared --enable-static && make && make install
+RUN mkdir -p vpx-build-windows && cd vpx-build-windows && CROSS=x86_64-w64-mingw32- ../libvpx/configure --target=x86_64-win64-gcc $PREFIX \
+ --enable-static --disable-shared --disable-debug --enable-experimental --enable-static-msvcrt \
+ --disable-examples --disable-tools --disable-docs --disable-unit-tests \
+ --enable-pic --enable-small \
+ && make && make install
+
+RUN cd x264 && ./configure $HOST $PREFIX $CROSSPREFIX --disable-cli --enable-static --enable-strip --enable-pic --disable-lavf --disable-swscale && make && make install && make clean
+
+RUN cd x265/build/linux && \
+echo "SET(CMAKE_SYSTEM_NAME Windows)" >> build.cmake && \
+echo "SET(CMAKE_C_COMPILER   x86_64-w64-mingw32-gcc) " >> build.cmake && \
+echo "SET(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++) " >> build.cmake && \
+echo "SET(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres) " >> build.cmake && \
+echo "SET(CMAKE_RANLIB x86_64-w64-mingw32-ranlib) " >> build.cmake && \
+echo "SET(CMAKE_ASM_YASM_COMPILER yasm) " >> build.cmake && \
+echo "option(ENABLE_SHARED OFF) " >> build.cmake && \
+cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off -DCMAKE_TOOLCHAIN_FILE=build.cmake ../../source
+RUN cd x265/build/linux && make && make install && make clean
+
+RUN cd aom/build && cmake $BASE/aom -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_TOOLCHAIN_FILE=$BASE/aom/build/cmake/toolchains/x86_64-mingw-gcc.cmake && make && make install
+
+ENV WINDOWS_CONFIG --extra-cflags=-I$DEST/include --extra-ldflags=-L$DEST/lib --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2
+
+RUN mkdir -p $REL/windows64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG && make && make install && cp $DEST/bin/*.dll $REL/windows64/free
+RUN mkdir -p $REL/windows64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG && make && make install && cp $DEST/bin/*.dll $REL/windows64/full
+
+ENTRYPOINT cp -r $REL /output
