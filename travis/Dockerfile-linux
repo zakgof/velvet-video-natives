@@ -13,9 +13,9 @@ RUN mkdir -p vpx-build-linux && cd vpx-build-linux && ../libvpx/configure $PREFI
  --enable-pic --enable-small \
  && make && make install
 
-RUN cd x264linux && ./configure $PREFIX --disable-cli --enable-static --enable-pic --enable-strip --disable-lavf --disable-swscale && make && make install
-RUN cd x265linux/build/linux && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off ../../source && make && make install
-RUN cd aomlinux/build && cmake -G "Unix Makefiles" -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST .. && make && make install
+RUN cd x264 && ./configure $PREFIX --disable-cli --enable-static --enable-pic --enable-strip --disable-lavf --disable-swscale && make && make install
+RUN cd x265/build/linux && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off ../../source && make && make install
+RUN cd aom/build && cmake -G "Unix Makefiles" -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST .. && make && make install
 
 RUN mkdir -p $REL/linux64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $LINUX_CONFIG  && make && make install && cp $DEST/lib/*.so $REL/linux64/free
 RUN mkdir -p $REL/linux64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $LINUX_CONFIG --extra-libs=-lpthread && make && make install && cp $DEST/lib/*.so $REL/linux64/full
