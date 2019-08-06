@@ -1,5 +1,7 @@
 FROM ubuntu:18.04
 
+RUN echo "APT::Acquire::Retries \"5\";" > /etc/apt/apt.conf.d/80-retries
+
 RUN apt-get -y update && apt-get install -y apt-utils
 RUN apt-get install -y --fix-missing mc mingw-w64 yasm nasm gcc make cmake git pkg-config wget
     
