@@ -11,8 +11,8 @@ before_install:
  - docker build - -t ffmpeg-prepare < travis/Dockerfile-prepare
  - docker build - -t ffmpeg-windows < travis/Dockerfile-windows
  - docker build - -t ffmpeg-linux < travis/Dockerfile-linux
- - run -v BINDIR:/output --name ffmpeg-win --rm -it ffmpeg-windows
- - run -v BINDIR:/output --name ffmpeg-lin --rm -it ffmpeg-linux
+ - docker run -v BINDIR:/output --name ffmpeg-win --rm -it ffmpeg-windows
+ - docker run -v BINDIR:/output --name ffmpeg-lin --rm -it ffmpeg-linux
  - mkdir -p natives-free/binaries/linux64 && mv $BINDIR/release/linux64/free/*.* $_
  - mkdir -p natives-free/binaries/windows64 && mv $BINDIR/release/windows64/free/*.* $_
  - mkdir -p natives-full/binaries/linux64 && mv $BINDIR/release/linux64/full/*.* $_

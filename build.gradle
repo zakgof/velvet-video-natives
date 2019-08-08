@@ -2,6 +2,10 @@ plugins {
     id "com.jfrog.bintray" version "1.8.4" apply false
 }
 
+ext {
+    baseVersion = '0.0.1'
+}
+
 subprojects {
 
     repositories {
@@ -14,8 +18,9 @@ subprojects {
     apply plugin: "com.jfrog.bintray"
 
     group = 'com.github.zakgof'
+    version = '0.0.1.' + (project.name - ~/^natives-/)
+    
     def archivesBaseName = 'velvet-video-natives'
-    version = '0.0.1.1'
     def github = 'https://github.com/zakgof/' + archivesBaseName
     
     ext {
@@ -29,7 +34,7 @@ subprojects {
             licenses {
                 license {
                     name project.licname
-                    url 'https://opensource.org/licenses/LGPL-3.0'
+                    url project.licurl
                 }
             }
             developers {
@@ -40,17 +45,18 @@ subprojects {
                 }
             }
         }
-        pkglics = {project.pkglics}
-        classifier = {project.classifier}
     }
+
     publishing {
         publications {
             MyPublication(MavenPublication) {
+                println 'MyPublication ' + project
                 groupId group
                 artifactId archivesBaseName
-                artifact source: jar, classifier: classifier
-                version version
+                artifact source: jar
+                version project.version
                 pom.withXml {
+                    println 'WITH XML ' + project
                     def root = asNode()
                     root.appendNode('description', project.descr)
                     root.appendNode('name', project.archivesBaseName)
@@ -71,7 +77,6 @@ subprojects {
             repo = 'maven'
             name = archivesBaseName
             userOrg = 'zakgof'
-            licenses = pkglics()
             vcsUrl = github + '.git'
             version {
                 name = project.version

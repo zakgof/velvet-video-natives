@@ -29,9 +29,18 @@ RUN cd x265/build/linux && make && make install && make clean
 
 RUN cd aom/build && cmake $BASE/aom -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_TOOLCHAIN_FILE=$BASE/aom/build/cmake/toolchains/x86_64-mingw-gcc.cmake && make && make install
 
-ENV WINDOWS_CONFIG --extra-cflags=-I$DEST/include --extra-ldflags=-L$DEST/lib --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2
+ENV WINDOWS_CONFIG --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2 --disable-w32threads
+ 
+ # Alternatively, you can remove libwinpthread.dll.a and the DLL itself from the toolchain directories. This might mess up programs linking with libstdc++ and libgcc DLLs though, so be careful.
+ 
+RUN mkdir -p $REL/windows64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG \
+   --extra-cflags="-I$DEST/include -static -static-libstdc++"  \
+   --extra-ldflags="-L$DEST/lib -static -static-libstdc++" \
+   && make && make install && cp $DEST/bin/*.dll $REL/windows64/free
+   
+RUN mkdir -p $REL/windows64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG \
+   --extra-cflags="-I$DEST/include -static -static-libstdc++"  \
+   --extra-ldflags="-L$DEST/lib -static -static-libstdc++" \
+   && make && make install && cp $DEST/bin/*.dll $REL/windows64/full
 
-RUN mkdir -p $REL/windows64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG && make && make install && cp $DEST/bin/*.dll $REL/windows64/free
-RUN mkdir -p $REL/windows64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG && make && make install && cp $DEST/bin/*.dll $REL/windows64/full
-
-ENTRYPOINT cp -r $REL /output
+CMD cp -r $REL /output

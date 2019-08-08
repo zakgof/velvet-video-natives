@@ -1,7 +1,10 @@
 ext {
-   classifier = 'free'
-   licname = 'GNU Lesser General Public License v3.0'
-   licurl = 'https://opensource.org/licenses/LGPL-3.0'       
-   pkglics = ['LGPL-3.0']   
+    licname = 'GNU Lesser General Public License v3.0'
+    licurl = 'https://opensource.org/licenses/LGPL-3.0'
 }
-    
+
+bintray {
+    pkg {
+        licenses = ['LGPL-3.0']
+    }
+}
