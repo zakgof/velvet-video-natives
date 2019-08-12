@@ -28,6 +28,7 @@ cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off -DCMA
 RUN cd x265/build/linux && make && make install && make clean
 
 RUN cd aom/build && cmake $BASE/aom -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_TOOLCHAIN_FILE=$BASE/aom/build/cmake/toolchains/x86_64-mingw-gcc.cmake && make && make install
+RUN cd openh264 && make OS=mingw_nt ARCH=x86_64 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ AR=x86_64-w64-mingw32-ar && make install
 
 ENV WINDOWS_CONFIG --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2 --disable-w32threads
  
@@ -37,10 +38,12 @@ RUN mkdir -p $REL/windows64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMO
    --extra-cflags="-I$DEST/include -static -static-libstdc++"  \
    --extra-ldflags="-L$DEST/lib -static -static-libstdc++" \
    && make && make install && cp $DEST/bin/*.dll $REL/windows64/free
-   
+
 RUN mkdir -p $REL/windows64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG \
-   --extra-cflags="-I$DEST/include -static -static-libstdc++"  \
-   --extra-ldflags="-L$DEST/lib -static -static-libstdc++" \
-   && make && make install && cp $DEST/bin/*.dll $REL/windows64/full
+   --extra-cflags="-I$DEST/include -static-libstdc++ -static-libgcc -static"  \
+   --extra-cxxflags="-I$DEST/include -static-libstdc++ -static-libgcc -static"  \
+   --extra-ldflags="-L$DEST/lib -static-libstdc++ -static-libgcc -static" \
+   && make && make install && cp $DEST/bin/*.dll $REL/windows64/full && cp /usr/lib/gcc/x86_64-w64-mingw32/7.3-win32/libgcc_s_seh-1.dll $REL/windows64/full
 
 CMD cp -r $REL /output
+#CMD bash
