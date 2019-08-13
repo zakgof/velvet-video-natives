@@ -28,7 +28,7 @@ cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off -DCMA
 RUN cd x265/build/linux && make && make install && make clean
 
 RUN cd aom/build && cmake $BASE/aom -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST -DCMAKE_TOOLCHAIN_FILE=$BASE/aom/build/cmake/toolchains/x86_64-mingw-gcc.cmake && make && make install
-RUN cd openh264 && make OS=mingw_nt ARCH=x86_64 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ AR=x86_64-w64-mingw32-ar && make install
+RUN cd openh264 && make OS=mingw_nt ARCH=x86_64 PREFIX=$DEST install
 
 ENV WINDOWS_CONFIG --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2 --disable-w32threads
  
