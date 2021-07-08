@@ -5,8 +5,11 @@ ENV PREFIX --prefix=$DEST
 ENV PKG_CONFIG_PATH $DEST/lib/pkgconfig
 ENV LINUX_CONFIG --extra-cflags=-I$DEST/include --extra-ldflags=-L$DEST/lib $PREFIX
 
-RUN cd libogg-1.3.0    && ./configure $PREFIX --disable-shared --enable-static && make && make install
+RUN cd libogg-1.3.4    && ./configure $PREFIX --disable-shared --enable-static && make && make install
 RUN cd libvorbis-1.3.3 && ./configure $PREFIX --disable-shared --enable-static && make && make install
+RUN cd opus-1.3.1      && ./configure $PREFIX --disable-shared --enable-static CFLAGS="-O3 -fPIC" && make && make install
+RUN cd lame-3.100      && ./configure $PREFIX --disable-shared --enable-static CFLAGS="-O3 -fPIC" && make && make install
+
 RUN mkdir -p vpx-build-linux && cd vpx-build-linux && ../libvpx/configure $PREFIX \
  --enable-static --disable-shared --disable-debug --enable-experimental \
  --disable-examples --disable-tools --disable-docs --disable-unit-tests \
@@ -16,8 +19,12 @@ RUN mkdir -p vpx-build-linux && cd vpx-build-linux && ../libvpx/configure $PREFI
 RUN cd x264 && ./configure $PREFIX --disable-cli --enable-static --enable-pic --enable-strip --disable-lavf --disable-swscale && make && make install
 RUN cd x265/build/linux && cmake -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=$DEST -DENABLE_SHARED=off ../../source && make && make install
 RUN cd aom/build && cmake -G "Unix Makefiles" -DENABLE_TESTS=0 -DENABLE_DOCS=0 -DCMAKE_INSTALL_PREFIX=$DEST .. && make && make install
+RUN cd openh264 && make OS=linux ARCH=x86_64 PREFIX=$DEST install
 
-RUN mkdir -p $REL/linux64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $LINUX_CONFIG  && make && make install && cp $DEST/lib/*.so $REL/linux64/free
-RUN mkdir -p $REL/linux64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMON_CONFIG $LINUX_CONFIG --extra-libs=-lpthread && make && make install && cp $DEST/lib/*.so $REL/linux64/full
+RUN mkdir -p $REL/linux64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $LINUX_CONFIG  && make && make install
+RUN cd $DEST/lib && cp lib*.so.? $REL/linux64/free && cp lib*.so.?? $REL/linux64/free
+RUN mkdir -p $REL/linux64/full && cd FFmpeg && make clean && ./configure $FULL_CONFIG $COMMON_CONFIG $LINUX_CONFIG --extra-libs=-lpthread && make && make install
+RUN cd $DEST/lib && cp lib*.so.? $REL/linux64/full && cp lib*.so.?? $REL/linux64/full
 
-CMD cp -r $REL /output
+#CMD bash
+CMD echo "Linux output" && ls $REL && cp -r $REL /output

@@ -2,9 +2,3 @@ ext {
    licname = 'GNU General Public License v3.0'
    licurl = 'https://opensource.org/licenses/GPL-3.0'
 }
-
-bintray {
-    pkg {
-        licenses = ['GPL-3.0']
-    }
-}

@@ -1,30 +1,35 @@
-plugins {
-    id "com.jfrog.bintray" version "1.8.4" apply false
-}
+import java.text.SimpleDateFormat
 
 ext {
-    baseVersion = '0.0.1'
+    baseVersion = '0.2.8'
 }
 
 subprojects {
 
-    repositories {
-        jcenter()
-    }
-
     apply plugin: "java-library"
-    apply plugin: "maven"
+    apply plugin: "signing"
     apply plugin: "maven-publish"
-    apply plugin: "com.jfrog.bintray"
 
     group = 'com.github.zakgof'
-    version = '0.0.1.' + (project.name - ~/^natives-/)
+    version = baseVersion + '.' + (project.name - ~/^natives-/)
     
     def archivesBaseName = 'velvet-video-natives'
     def github = 'https://github.com/zakgof/' + archivesBaseName
-    
+       
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        baseName = archivesBaseName
+        from('..') {
+          include 'scripts/**'
+        }
+        from('.') {
+          include 'src/**'
+        }
+    }
+
     ext {
-        descr = 'Java video encoding/decoding/muxing/demuxing library native components'   
+    
+        descr = 'Java video encoding/decoding/muxing/demuxing library native components'
         pomConfig = {
             scm {
                 connection 'scm:git:' + github + '.git'
@@ -46,14 +51,43 @@ subprojects {
             }
         }
     }
-
+    
+    task nativeVersion()  {
+        doLast {
+            new File(projectDir, "velvet-video-natives/version.inf").text = """
+Version=${version}
+Buildtime=${new SimpleDateFormat("dd-MM-yyyy HH:mm:ss").format(new Date())}
+"""
+        }
+    }
+    
+    jar {
+        dependsOn nativeVersion 
+        baseName = archivesBaseName
+        from('.') {
+          include 'LICENSE.*'
+          include 'velvet-video-natives/**'
+        }
+    }
+    
+    artifacts {
+        archives sourcesJar
+    }
+    
     publishing {
+        repositories {
+            maven {
+                name 'ossrh'
+                url = baseVersion.endsWith('SNAPSHOT') ? "https://oss.sonatype.org/content/repositories/snapshots/" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+                credentials(PasswordCredentials)
+            }
+        }
         publications {
-            MyPublication(MavenPublication) {
-                println 'MyPublication ' + project
+            mavenJava(MavenPublication) {
                 groupId group
                 artifactId archivesBaseName
                 artifact source: jar
+                artifact sourcesJar
                 version project.version
                 pom.withXml {
                     println 'WITH XML ' + project
@@ -66,31 +100,9 @@ subprojects {
             }
         }
     }
-
-    bintray {
-        user = 'zakgof'
-        key = project.hasProperty('bintrayKey') ? bintrayKey : System.getenv('BINTRAY_KEY')
-        publications = ['MyPublication']
-        configurations = ['archives']
-        override = true
-        pkg {
-            repo = 'maven'
-            name = archivesBaseName
-            userOrg = 'zakgof'
-            vcsUrl = github + '.git'
-            version {
-                name = project.version
-            }
-        }
-    }
     
-    jar {
-        baseName = archivesBaseName
-        from('.') {
-          include 'LICENSE.*'
-          include 'binaries/**'
-       }
+    signing {
+        sign publishing.publications['mavenJava']
     }
+   
 }
-
-

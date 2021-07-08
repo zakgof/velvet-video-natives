@@ -6,8 +6,11 @@ ENV HOST --host=x86_64-w64-mingw32
 ENV CROSSPREFIX --cross-prefix=x86_64-w64-mingw32- 
 ENV PKG_CONFIG_PATH $DEST/lib/pkgconfig
 
-RUN cd libogg-1.3.0    && ./configure $PREFIX $HOST --disable-shared --enable-static && make && make install
+RUN cd libogg-1.3.4    && ./configure $PREFIX $HOST --disable-shared --enable-static && make && make install
 RUN cd libvorbis-1.3.3 && ./configure $PREFIX $HOST --disable-shared --enable-static && make && make install
+RUN cd opus-1.3.1      && ./configure $PREFIX $HOST --disable-shared --enable-static CFLAGS="-O3 -fPIC" && make && make install
+RUN cd lame-3.100      && ./configure $PREFIX $HOST --disable-shared --enable-static CFLAGS="-O3 -fPIC" && make && make install
+
 RUN mkdir -p vpx-build-windows && cd vpx-build-windows && CROSS=x86_64-w64-mingw32- ../libvpx/configure --target=x86_64-win64-gcc $PREFIX \
  --enable-static --disable-shared --disable-debug --enable-experimental --enable-static-msvcrt \
  --disable-examples --disable-tools --disable-docs --disable-unit-tests \
@@ -32,8 +35,6 @@ RUN cd openh264 && make OS=mingw_nt ARCH=x86_64 PREFIX=$DEST install
 
 ENV WINDOWS_CONFIG --arch=x86_64 --target-os=mingw32 $CROSSPREFIX $PREFIX --disable-dxva2 --disable-w32threads
  
- # Alternatively, you can remove libwinpthread.dll.a and the DLL itself from the toolchain directories. This might mess up programs linking with libstdc++ and libgcc DLLs though, so be careful.
- 
 RUN mkdir -p $REL/windows64/free && cd FFmpeg && ./configure $FREE_CONFIG $COMMON_CONFIG $WINDOWS_CONFIG \
    --extra-cflags="-I$DEST/include -static -static-libstdc++"  \
    --extra-ldflags="-L$DEST/lib -static -static-libstdc++" \
@@ -45,5 +46,4 @@ RUN mkdir -p $REL/windows64/full && cd FFmpeg && ./configure $FULL_CONFIG $COMMO
    --extra-ldflags="-L$DEST/lib -static-libstdc++ -static-libgcc -static" \
    && make && make install && cp $DEST/bin/*.dll $REL/windows64/full && cp /usr/lib/gcc/x86_64-w64-mingw32/7.3-win32/libgcc_s_seh-1.dll $REL/windows64/full
 
-CMD cp -r $REL /output
-#CMD bash
+CMD cp -r $REL /output && cp -r /sources /output && ls /output/sources
